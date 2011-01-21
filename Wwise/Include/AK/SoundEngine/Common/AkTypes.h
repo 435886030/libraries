@@ -77,7 +77,6 @@ typedef AkUInt32		AkChannelMask;				///< Channel mask (similar to WAVE_FORMAT_EX
 
 // Constants.
 static const AkPluginID					AK_INVALID_PLUGINID					= (AkPluginID)-1;		///< Invalid FX ID
-static const AkPluginID					AK_PLUGINID_ENVIRONMENTAL			= (AkPluginID)-2;		///< FX is Environmental
 static const AkGameObjectID				AK_INVALID_GAME_OBJECT				= (AkGameObjectID)-1;	///< Invalid game object (may also mean all game objects)
 static const AkUniqueID					AK_INVALID_UNIQUE_ID				=  0;					///< Invalid unique 32-bit ID
 static const AkRtpcID					AK_INVALID_RTPC_ID					=  AK_INVALID_UNIQUE_ID;///< Invalid RTPC ID
@@ -183,6 +182,7 @@ enum AKRESULT
 	AK_SSEInstructionsNotSupported = 76,///< The machine does not support SSE instructions (required on PC).
 	AK_Busy						= 77,	///< The system is busy and could not process the request.
 	AK_UnsupportedChannelConfig = 78,	///< Channel configuration is not supported in the current execution context.
+	AK_PluginMediaNotAvailable  = 79,	///< Plugin media is not available for effect.
 };
 
 /// Game sync group type
@@ -207,17 +207,55 @@ struct AkExternalSourceInfo
 	void* pInMemory;				///< Pointer to the in-memory file.  If not NULL, the source will be read from memory.  Set szFile and idFile to NULL.
 	AkUInt32 uiMemorySize;			///< Size of the data pointed by pInMemory
 	AkFileID idFile;				///< File ID.  If not zero, the source will be streaming from disk.  This ID can be anything.  Note that you must override the low-level IO to resolve this ID to a real file.  See \ref streamingmanager_lowlevel for more information on overriding the Low Level IO.
-};
 
-/// Internal structure.
-class AkExternalSourceArray;
+	/// Default constructor.
+	AkExternalSourceInfo()
+		: iExternalSrcCookie( 0 )
+		, idCodec( 0 )
+		, szFile( 0 )
+		, pInMemory( 0 )
+		, uiMemorySize( 0 )
+		, idFile( 0 ) {}
 
-/// Optional parameter.
-struct AkCustomParamType
-{
-	AkInt64					customParam;	///< Reserved, must be 0
-	AkUInt32				ui32Reserved;	///< Reserved, must be 0
-	AkExternalSourceArray*  pExternalSrcs;	///< Reserved
+	/// Constructor: specify source by memory.
+	AkExternalSourceInfo( 
+		void* in_pInMemory,				///< Pointer to the in-memory file.
+		AkUInt32 in_uiMemorySize,		///< Size of data.
+		AkUInt32 in_iExternalSrcCookie,	///< Cookie.
+		AkCodecID in_idCodec			///< Codec ID.
+		)
+		: iExternalSrcCookie( in_iExternalSrcCookie )
+		, idCodec( in_idCodec )
+		, szFile( 0 )
+		, pInMemory( in_pInMemory )
+		, uiMemorySize( in_uiMemorySize )
+		, idFile( 0 ) {}
+
+	/// Constructor: specify source by streaming file name.
+	AkExternalSourceInfo( 
+		AkOSChar * in_pszFileName,		///< File name.
+		AkUInt32 in_iExternalSrcCookie,	///< Cookie.
+		AkCodecID in_idCodec			///< Codec ID.
+		)
+		: iExternalSrcCookie( in_iExternalSrcCookie )
+		, idCodec( in_idCodec )
+		, szFile( in_pszFileName )
+		, pInMemory( 0 )
+		, uiMemorySize( 0 )
+		, idFile( 0 ) {}
+
+	/// Constructor: specify source by streaming file ID.
+	AkExternalSourceInfo( 
+		AkFileID in_idFile,				///< File ID.
+		AkUInt32 in_iExternalSrcCookie,	///< Cookie.
+		AkCodecID in_idCodec			///< Codec ID.
+		)
+		: iExternalSrcCookie( in_iExternalSrcCookie )
+		, idCodec( in_idCodec )
+		, szFile( 0 )
+		, pInMemory( 0 )
+		, uiMemorySize( 0 )
+		, idFile( in_idFile ) {}
 };
 
 /// 3D vector.
@@ -292,10 +330,7 @@ enum AkCurveInterpolation
 struct AkEnvironmentValue
 {
 	AkEnvID EnvID;			///< Unique environment identifier
-	AkReal32 fControlValue; ///< Value in the range [0.0f:1.0f], send level to environment
-#ifndef AK_OPTIMIZED	
-	AkReal32 fUserData;     ///< User data returned by the profiler (opt)
-#endif
+	AkReal32 fControlValue; ///< Value in the range [0.0f:1.0f], send level to environment	
 };
 
 // ---------------------------------------------------------------
@@ -322,6 +357,8 @@ struct AkEnvironmentValue
 // PCM Ex encoding, this is pluggable so its ID is defined in the PCM Ex SDK factory file
 //#define AKCODECID_PCMEX				(7)
 #define AKCODECID_EXTERNAL_SOURCE       (8)		///< External Source (unknown encoding)
+// xWMA encoding, this is pluggable so its ID is defined in the xWMA SDK factory file
+//#define AKCODECID_XWMA                  (9)
 
 class IAkSoftwareCodec;
 /// Registered file source creation function prototype.

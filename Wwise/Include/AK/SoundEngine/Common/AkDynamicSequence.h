@@ -126,25 +126,33 @@ namespace AK
 
 			/// Play specified Dynamic Sequence.
 			extern AKSOUNDENGINE_API AKRESULT Play( 
-				AkPlayingID in_playingID						///< AkPlayingID returned by DynamicSequence::Open
+				AkPlayingID in_playingID,											///< AkPlayingID returned by DynamicSequence::Open
+				AkTimeMs in_uTransitionDuration = 0,								///< Fade duration
+				AkCurveInterpolation in_eFadeCurve = AkCurveInterpolation_Linear	///< Curve type to be used for the transition
 				);
 
 			/// Pause specified Dynamic Sequence. 
 			/// To restart the sequence, call Resume.  The item paused will resume its playback, followed by the rest of the sequence.
 			extern AKSOUNDENGINE_API AKRESULT Pause( 
-				AkPlayingID in_playingID						///< AkPlayingID returned by DynamicSequence::Open
+				AkPlayingID in_playingID,											///< AkPlayingID returned by DynamicSequence::Open
+				AkTimeMs in_uTransitionDuration = 0,								///< Fade duration
+				AkCurveInterpolation in_eFadeCurve = AkCurveInterpolation_Linear	///< Curve type to be used for the transition
 				);
 
 			/// Resume specified Dynamic Sequence.
 			extern AKSOUNDENGINE_API AKRESULT Resume(
-				AkPlayingID in_playingID						///< AkPlayingID returned by DynamicSequence::Open
+				AkPlayingID in_playingID,											///< AkPlayingID returned by DynamicSequence::Open
+				AkTimeMs in_uTransitionDuration = 0,									///< Fade duration
+				AkCurveInterpolation in_eFadeCurve = AkCurveInterpolation_Linear	///< Curve type to be used for the transition
 				);
 
 			/// Stop specified Dynamic Sequence immediately.  
 			/// To restart the sequence, call Play. The sequence will restart with the item that was in the 
 			/// playlist after the item that was stopped.
 			extern AKSOUNDENGINE_API AKRESULT Stop(
-				AkPlayingID in_playingID						///< AkPlayingID returned by DynamicSequence::Open
+				AkPlayingID in_playingID,											///< AkPlayingID returned by DynamicSequence::Open
+				AkTimeMs in_uTransitionDuration = 0,								///< Fade duration
+				AkCurveInterpolation in_eFadeCurve = AkCurveInterpolation_Linear	///< Curve type to be used for the transition
 				);
 
 			/// Break specified Dynamic Sequence.  The sequence will stop after the current item.

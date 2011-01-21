@@ -85,15 +85,16 @@ namespace AK
 		///	- The active segment during the pre-entry of the first segment of a Playlist Container or a Music Switch 
 		///		Container is "nothing", as well as during the post-exit of the last segment of a Playlist (and beyond).
 		///	- When the active segment is "nothing", out_uSegmentInfo is filled with zeros.
-		/// - When queried with this method, AkSegmentInfo::iCurrentPosition is corrected by the amount of time elapsed
+		/// - If in_bExtrapolate is true (default), AkSegmentInfo::iCurrentPosition is corrected by the amount of time elapsed
 		///		since the beginning of the audio frame. It is thus possible that it slightly overshoots the total segment length.
 		/// \return AK_Success if there is a playing music structure associated with the specified playing ID.
 		/// \sa
 		/// - AK::SoundEngine::PostEvent
 		/// - AkSegmentInfo
 		extern AKSOUNDENGINE_API AKRESULT GetPlayingSegmentInfo(
-			AkPlayingID		in_PlayingID,		///< Playing ID returned by AK::SoundEngine::PostEvent()
-			AkSegmentInfo &	out_segmentInfo		///< Structure containing information about the active segment of the music structure that is playing
+			AkPlayingID		in_PlayingID,			///< Playing ID returned by AK::SoundEngine::PostEvent().
+			AkSegmentInfo &	out_segmentInfo,		///< Structure containing information about the active segment of the music structure that is playing.
+			bool			in_bExtrapolate = true	///< Position is extrapolated based on time elapsed since last sound engine update.
 			);
 
         //@}

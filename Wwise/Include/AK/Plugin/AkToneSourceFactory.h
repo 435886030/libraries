@@ -39,7 +39,7 @@ AK::SoundEngine::RegisterPlugin( AkPluginTypeSource,
 								 AKCOMPANYID_AUDIOKINETIC, 
 								 AKSOURCEID_TONE,
 								 CreateToneSource,
-								 CreateToneSourceParam );
+								 CreateToneSourceParams );
 */
 
 #endif // _AK_FXTONEGENFACTORY_H_

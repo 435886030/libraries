@@ -57,6 +57,7 @@ struct AkDeviceSettings
 	AkReal32			fTargetAutoStmBufferLength;	///< Targetted automatic stream buffer length (ms). When a stream reaches that buffering, it stops being scheduled for I/O except if the scheduler is idle.
 	AkUInt32			uIdleWaitTime;				///< I/O thread maximum wait time when scheduler is idle. Can be INFINITE.
 													///< It is considered idle when running automatic streams have more data than their targetted buffering, and no standard stream is waiting for I/O.
+													///< <b>Important: </b> This feature will be deprecated in Wwise 2010.3. Current titles should avoid using it.
 	AkUInt32			uMaxConcurrentIO;			///< Maximum number of transfers that can be sent simultaneously to the Low-Level I/O (applies to AK_SCHEDULER_DEFERRED_LINED_UP device only).
 };
 
@@ -314,11 +315,18 @@ namespace AK
 				) = 0;
 
 			/// Notifies that a transfer request is cancelled. It will be flushed by the streaming device when completed.
+			/// Cancellation is normal and happens regularly; for example, whenever a sound stops before the end
+			/// or stops looping. It happens even more frequently when buffering (AkDeviceSettings::fTargetAutoStmBufferLength 
+			/// and AkDeviceSettings::uGranularity) is large and when you low-level IO hook accepts many concurrent requests
+			/// at the same time.
 			/// \remarks
 			/// - Cancel() simply informs the Low-Level I/O that a specific transfer will be flushed upon reception. 
 			///	The Low-Level I/O may use this information to stop this transfer right away, or not (it is internally tagged
 			///	by the high-level device as cancelled). Nevertheless, the callback function MUST be called for cancelled 
 			///	transfers to be resolved.
+			/// - When calling the callback function of a cancelled transfer, pass it *AK_Success*. Passing AK_Fail 
+			/// to AkAsyncIOTransfer::pCallback has the effect of killing the stream once and for all. This is not
+			/// what you want.
 			/// - If io_bCancelAllTransfersForThisFile is set, you may cancel all transfers for this file at once.
 			///	Leave io_bCancelAllTransfersForThisFile to true if you don't want to be called again. If you set it to
 			///	false, Cancel() will be called again for each remaining pending transfer that need to be cancelled. 

@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -104,6 +105,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -148,18 +150,108 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\AkDefaultIOHookBlocking.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\AkDefaultIOHookDeferred.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\AkSoundEngineDLL.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\AlignedPtr.cpp"
+				>
+			</File>
+			<Filter
+				Name="Common"
+				>
+				<File
+					RelativePath=".\Common\AkDefaultLowLevelIODispatcher.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFileLocationBase.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFilePackage.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFilePackageLUT.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
-			>
+			<File
+				RelativePath=".\AkDefaultIOHookBlocking.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AkDefaultIOHookDeferred.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AkFileHelpers.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AkFilePackageLowLevelIOBlocking.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AkFilePackageLowLevelIODeferred.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AkSoundEngineDLL.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AkSoundEngineExports.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AlignedPtr.h"
+				>
+			</File>
+			<Filter
+				Name="Common"
+				>
+				<File
+					RelativePath=".\Common\AkDefaultLowLevelIODispatcher.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFileLocationBase.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFilePackage.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFilePackageLowLevelIO.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFilePackageLowLevelIO.inl"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\AkFilePackageLUT.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

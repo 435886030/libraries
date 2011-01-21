@@ -47,7 +47,8 @@ AK::IAkPlugin* CreateAudioInputSource(
 // API external to the plug-in, to be used by the game.
 
 /// Callback requesting for the AkAudioFormat to use for the plug-in instance.
-/// Refer to the Source Input plugin documentation to learn more about the valid.
+/// Refer to the Source Input plugin documentation to learn more about the valid formats.
+/// \sa \ref soundengine_plugins_source
 typedef void( *AkAudioInputPluginGetFormatCallbackFunc )(
     AkPlayingID		in_playingID,   ///< Playing ID (same that was returned from the PostEvent call or from the PlayAudioInput call.
     AkAudioFormat&  io_AudioFormat  ///< Already filled format, modify it if required.
@@ -60,15 +61,14 @@ typedef AkReal32( *AkAudioInputPluginGetGainCallbackFunc )(
     );
 
 /// Callback requesting for new data for playback.
-/// See IntegrationDemo sample for a sample on hoy to implement it.
-
+/// See IntegrationDemo sample for a sample on how to implement it.
 typedef void( *AkAudioInputPluginExecuteCallbackFunc )(
     AkPlayingID		in_playingID,  ///< Playing ID (same that was returned from the PostEvent call or from the PlayAudioInput call.
     AkAudioBuffer*	io_pBufferOut  ///< Buffer to fill
     );
 
 /// Starts the playback of the AudioInputPlugin plugin on the specified game object.
-/// If you have multiple Instances of the AudioInput plugin, you must keep track of the PlayingIDs
+/// If you have multiple instances of the AudioInput plugin, you must keep track of the PlayingIDs
 /// since they will be required on the callbacks.
 /// If the plugin is infinitely playing, you must keep track of the playing ID to stop it using StopAudioInput().
 /// WARNING: This function was added to allow the playback of a plug-in without having

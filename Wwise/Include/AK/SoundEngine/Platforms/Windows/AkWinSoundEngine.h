@@ -51,9 +51,7 @@ struct AkPlatformInitSettings
 
 	bool				bGlobalFocus;			///< Corresponding to DSBCAPS_GLOBALFOCUS. Sounds will be muted if set to false when the game loses the focus.
 
-#ifndef AK_OPTIMIZED
-	AkThreadProperties  threadMonitor;			///< Monitor threading properties (its default priority is AK_THREAD_PRIORITY_ABOVENORMAL)
-#endif
+	AkThreadProperties  threadMonitor;			///< Monitor threading properties (its default priority is AK_THREAD_PRIORITY_ABOVENORMAL). This parameter is not used in Release build.
 };
 
 struct IDirectSound8;

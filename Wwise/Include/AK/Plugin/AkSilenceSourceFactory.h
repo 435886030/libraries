@@ -39,7 +39,7 @@ AK::SoundEngine::RegisterPlugin( AkPluginTypeSource,
 								 AKCOMPANYID_AUDIOKINETIC, 
 								 AKSOURCEID_SILENCE,
 								 CreateSilenceSource,
-								 CreateSilenceSourceParam );
+								 CreateSilenceSourceParams );
 */
 
 #endif // _AK_SILENCESOURCEFACTORY_H_

@@ -89,6 +89,21 @@ namespace AK
 				LPWSTR out_pszRelativePath,		///< A pointer to the array that receives the path
 				UINT in_uiRelativePathSize				///< The size of the array that receives the path
 				) = 0;
+
+			/// Create a AK style list control with 3 columns:
+			/// - Filename
+			/// - Status
+			/// - Owner
+			/// You must create a static control in the resources delimitating the region of the list control and
+			/// pass the control ID of it.
+			/// \note DestroyFileStatusListControl must be called when handling WM_DESTROY in WindowProc
+			/// \warning This function is not thread-safe.
+			virtual void CreateFileStatusListControl( 
+				HWND in_hWndParent,					///< The parent dialog to create the list control
+				UINT in_idStatic,					///< The ID of the placeholder static control, which will also be the ID of the list control after the creation
+				const WCHAR** in_ppFilenameList,	///< The list of files to show in the list
+				unsigned int in_uiFilenameListCount	///< the number of files in the in_ppFilenameList array
+				) = 0;
 		};							  
 	}
 }

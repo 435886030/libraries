@@ -97,8 +97,8 @@ namespace AK
 			public:
 				/// Returns the new name given during the rename operation
 				virtual void GetNewName( 
-					LPWSTR out_csNewName,		/// out: String buffer to receive the new name
-					unsigned int in_uiArraySize /// in: size of the buffer in number of characters
+					LPWSTR out_csNewName,		///< out: String buffer to receive the new name
+					unsigned int in_uiArraySize ///< in: size of the buffer in number of characters
 					) = 0;
 			};
 
@@ -110,10 +110,10 @@ namespace AK
 			public:
 				/// Return the move source and destination for the file at index in_uiIndex
 				virtual void GetMovedFile( 
-					unsigned int in_uiIndex,	/// in: The index of the moved file. Must be >= 0 and < GetMovedFilesCount()
-					LPWSTR out_szFrom,			/// out: String buffer to receive the source path
-					LPWSTR out_szTo,			/// out: String buffer to receive the destination path
-					unsigned int in_uiArraySize /// in: Size of the buffers (out_szFrom and out_szTo)
+					unsigned int in_uiIndex,	///< in: The index of the moved file. Must be >= 0 and < GetMovedFilesCount()
+					LPWSTR out_szFrom,			///< out: String buffer to receive the source path
+					LPWSTR out_szTo,			///< out: String buffer to receive the destination path
+					unsigned int in_uiArraySize ///< in: Size of the buffers (out_szFrom and out_szTo)
 					) = 0;
 				
 				/// Returns how many files were moved during the operation

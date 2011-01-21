@@ -58,9 +58,7 @@ public:
 	virtual AkChannelMask GetMixingFormat() = 0;
 	virtual void		SetMasterVolume(AkReal32 in_fVol) = 0;
 
-#ifndef AK_OPTIMIZED
 	virtual void		StartOutputCapture(const AkOSChar* in_CaptureFileName) = 0;
 	virtual void		StopOutputCapture() = 0;
-#endif
 };
 #endif

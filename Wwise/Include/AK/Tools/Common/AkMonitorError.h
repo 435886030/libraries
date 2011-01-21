@@ -34,6 +34,7 @@ namespace AK
 			ErrorCode_IODevice,
 
 			ErrorCode_PluginUnsupportedChannelConfiguration,
+			ErrorCode_PluginMediaUnavailable,
 			ErrorCode_PluginInitialisationFailed,
 			ErrorCode_PluginProcessingFailed,
 			ErrorCode_PluginExecutionInvalid,
@@ -41,6 +42,10 @@ namespace AK
 
 			ErrorCode_VorbisRequireSeekTable,
 			ErrorCode_VorbisRequireSeekTableVirtual,
+
+			ErrorCode_VorbisDecodeError,
+			
+			ErrorCode_xWMACreateDecoderFailed,
 
 			ErrorCode_InvalidAudioFileHeader,
 			ErrorCode_FileTooSmall,
@@ -62,6 +67,7 @@ namespace AK
 			ErrorCode_MediaNotLoaded,
 			ErrorCode_VoiceStarving,
 			ErrorCode_StreamingSourceStarving,
+			ErrorCode_XMADecoderSourceStarving,
 
 			ErrorCode_PluginNotRegistered,
 			ErrorCode_CodecNotRegistered,
@@ -179,7 +185,8 @@ namespace AK
 			L"Not enough memory to start stream", // ErrorCode_CannotStartStreamNoMemory,
 			L"IO device error", // ErrorCode_IODevice,
 
-			L"Plugin unsupported channel configuration", // ErrorCode_PluginUnsupportedChannelConfiguration,
+			L"Plug-in unsupported channel configuration", // ErrorCode_PluginUnsupportedChannelConfiguration,
+			L"Plug-in media unavailable", // ErrorCode_PluginMediaUnavailable,
 			L"Plug-in initialization failure", // ErrorCode_PluginInitialisationFailed,
 			L"Plug-in execution failure", // ErrorCode_PluginProcessingFailed,
 			L"Invalid plug-in execution mode", // ErrorCode_PluginExecutionInvalid
@@ -187,6 +194,10 @@ namespace AK
 
 			L"Seek table required to seek in Vorbis sources. Please update conversion settings.", // ErrorCode_VorbisRequireSeekTable,
 			L"Seek table needed for Vorbis audio format with this virtual voice behavior. Please update conversion settings or virtual mode.", // ErrorCode_VorbisRequireSeekTableVirtual,
+
+			L"Vorbis decoder failure", // ErrorCode_VorbisDecodeError,
+
+			L"Failed creating xWMA decoder", // ErrorCode_xWMACreateDecoderFailed,
 
 			L"Invalid file header", // ErrorCode_InvalidAudioFileHeader,
 			L"File or loop region is too small to be played properly", // ErrorCode_FileTooSmall,
@@ -209,9 +220,10 @@ namespace AK
 			L"Media was not loaded for this source",// ErrorCode_MediaNotLoaded,
 			L"Voice Starvation", // ErrorCode_VoiceStarving,
 			L"Source starvation", // ErrorCode_StreamingSourceStarving,
+			L"XMA decoder starvation", // ErrorCode_XMADecoderSourceStarving,
 
 			L"Plug-in not registered", // ErrorCode_PluginNotRegistered,
-			L"Codec plug-in not registered: Vorbis", // ErrorCode_CodecNotRegistered,
+			L"Codec plug-in not registered", // ErrorCode_CodecNotRegistered,
 
 			L"Event ID not found", // ErrorCode_EventIDNotFound,
 

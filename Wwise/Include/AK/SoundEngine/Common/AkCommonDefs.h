@@ -337,6 +337,31 @@ public:
 		}
 	}
 
+#if defined(_DEBUG) && !defined(RVL_OS)
+	bool CheckValidSamples()
+	{
+		// Zero out all channels.
+		const AkUInt32 uNumChannels = NumChannels();
+		for ( AkUInt32 i = 0; i < uNumChannels; ++i )
+		{
+			AkSampleType * AK_RESTRICT pfChan = GetChannel(i);
+			if ( pfChan )
+			{
+				for ( AkUInt32 j = 0; j < uValidFrames; j++ )
+				{
+					AkSampleType fSample = *pfChan++;
+					if ( fSample > 4.f )
+						return false;
+					else if ( fSample < -4.f )
+						return false;
+				}
+			}
+		}
+
+		return true;
+	}
+#endif
+
 #ifdef AK_PS3
 	/// Access to contiguous channels for DMA transfers on SPUs (PS3 specific).
 	/// \remarks On the PS3, deinterleaved channels are guaranteed to be contiguous

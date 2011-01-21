@@ -53,11 +53,21 @@
 												else                                \
 													assert(Condition)
 			#elif defined( __APPLE__ )
-			#include <CoreServices/CoreServices.h>
+					#include <TargetConditionals.h>
+					
+					#if TARGET_OS_IPHONE && TARGET_IPHONE_SIMULATOR
+						#define CallDebugger asm("int3");
+					#elif TARGET_OS_IPHONE
+						#define CallDebugger asm("trap");
+					#else
+						#include <CoreServices/CoreServices.h>
+						#define CallDebugger Debugger();
+					#endif
+
 					inline void _MacAssert( const char * in_pFunc , const char * in_pFile , unsigned in_LineNum, const char * in_pCondition )
 					{
 						printf ("%s:%u:%s failed assertion `%s'\n", in_pFile, in_LineNum, in_pFunc, in_pCondition);
-						Debugger();
+						CallDebugger
 					}
 
 					#define _AkAssertHook(_Expression) ( (_Expression) || (g_pAssertHook( #_Expression, __FILE__, __LINE__), 0) )

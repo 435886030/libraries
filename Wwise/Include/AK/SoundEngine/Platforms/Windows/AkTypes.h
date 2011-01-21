@@ -13,14 +13,14 @@
 #define _AK_DATA_TYPES_PLATFORM_H_
 
 #if defined (WIN32) && defined (_M_IX86)
-#define AK_WIN32								///< For Windows 32 bit OS
+#define AK_CPU_X86								///< For Windows 32 bit OS
 #elif defined (WIN64) && defined (_M_AMD64)
-#define AK_WIN64								///< For Windows 64 bit OS
+#define AK_CPU_X86_64							///< For Windows 64 bit OS
 #endif
 
-#if defined (WIN32) || defined (WIN64)
 #define AK_WIN									///< For All Windows	
-#endif
+
+#define AK_MOTION								///< Internal use
 
 #define AK_LFECENTER							///< Internal use
 
@@ -60,6 +60,7 @@ typedef float			AkReal32;				///< 32-bit floating point
 typedef double          AkReal64;				///< 64-bit floating point
 
 typedef void *					AkThread;		///< Thread handle
+typedef AkUInt32				AkThreadID;		///< Thread ID
 typedef AkUInt32 (__stdcall *AkThreadRoutine)(	void* lpThreadParameter	); ///< Thread routine
 typedef void *					AkEvent;		///< Event handle
 typedef void *					AkFileHandle;	///< File handle

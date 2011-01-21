@@ -479,7 +479,9 @@ namespace AK
 			/// Calling StopPlayingID on a playing ID that is not active will have no impact.
 			/// \return	True if the operation was successful, False otherwise
 			virtual bool StopPlayingID( 
-				AkPlayingID in_playingID ///< Playing ID that was returned by a PostEvent command.
+				AkPlayingID in_playingID, ///< Playing ID that was returned by a PostEvent command.
+				AkTimeMs in_uTransitionDuration = 0,								///< Fade duration
+				AkCurveInterpolation in_eFadeCurve = AkCurveInterpolation_Linear	///< Curve type to be used for the transition
 				) = 0;
 
 			//@}
@@ -858,11 +860,18 @@ namespace AK
 			/// @name Original Files
 			//@{
 
-			/// GetOriginalFiles associated to an event name
+			/// Get the list of original source files associated with an event.
 			/// \return	True if the operation was successful, False otherwise
-			virtual bool GetOriginalFileList( 
+			virtual bool GetEventOriginalFileList( 
 				LPCWSTR  in_pszEvent,						///< Name of the event.
-				IOriginalFileList ** out_ppOriginalFileList	///< Returned AddRef'd pointer to an IOriginalFile interface
+				IOriginalFileList ** out_ppOriginalFileList	///< Returned AddRef'd pointer to an IOriginalFileList interface.
+				) const = 0;
+
+			/// Get the list of original source files associated with a dialogue event.
+			/// \return	True if the operation was successful, False otherwise
+			virtual bool GetDialogueEventOriginalFileList( 
+				LPCWSTR  in_pszDialogueEvent,				///< Name of the dialogue event.
+				IOriginalFileList ** out_ppOriginalFileList	///< Returned AddRef'd pointer to an IOriginalFileList interface.
 				) const = 0;
 
 			//@}

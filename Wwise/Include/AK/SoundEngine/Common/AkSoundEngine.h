@@ -47,10 +47,9 @@ struct AkInitSettings
 	AkUInt32            uCommandQueueSize;			///< Size of the command queue, in bytes
 	AkMemPoolId			uPrepareEventMemoryPoolID;	///< Memory pool where data allocated by AK::SoundEngine::PrepareEvent() and AK::SoundEngine::PrepareGameSyncs() will be done. 
 	bool				bEnableGameSyncPreparation;	///< Set to true to enable AK::SoundEngine::PrepareGameSync usage.
-#ifndef AK_OPTIMIZED
-    AkUInt32            uMonitorPoolSize;			///< Size of the monitoring pool, in bytes
-    AkUInt32            uMonitorQueuePoolSize;		///< Size of the monitoring queue pool, in bytes
-#endif
+
+    AkUInt32            uMonitorPoolSize;			///< Size of the monitoring pool, in bytes. This parameter is not used in Release build.
+    AkUInt32            uMonitorQueuePoolSize;		///< Size of the monitoring queue pool, in bytes. This parameter is not used in Release build.
 };
 
 
@@ -174,8 +173,11 @@ namespace AK
         extern AKSOUNDENGINE_API void Term();
 
 		/// Get the output speaker configuration.
-		/// Call this function to get the player's speaker configuration. The configuration depends on
-		/// the platform, or the user's setting.
+		/// Call this function to get the speaker configuration of the sound engine output (which may not correspond
+		/// to the physical output format of the platform, in the case of downmixing provided by the platform itself). 
+		/// This speaker configuration is automatically determined by the sound engine, based on the platform and
+		/// platform settings (i.e. system menu or control panel option).
+		/// 
 		/// \warning Call this function only after the sound engine has been properly initialized.
 		/// \return One of the supported configuration: 
 		/// - AK_SPEAKER_SETUP_STEREO
@@ -183,7 +185,7 @@ namespace AK
 		/// - AK_SPEAKER_SETUP_SURROUND (Wii only)
 		/// - AK_SPEAKER_SETUP_DPL2	(Wii only)
 		/// \sa 
-		/// - AkCommonDefs.h
+		/// - AkSpeakerConfig.h
 		extern AKSOUNDENGINE_API AkChannelMask GetSpeakerConfiguration();
 
 		/// Allows the game to set the volume threshold to be used by the sound engine to determine if a voice must go virtual.
@@ -725,16 +727,24 @@ namespace AK
 			AkPlayingID in_playingID 					///< Playing ID of the event that must not use callbacks
 			);
 
-		/// Get the current position of the source associated with this playing ID.
+		/// Get the current position of the source associated with this playing ID, obtained from PostEvent().
+		/// Notes:
+		/// - You need to pass AK_EnableGetSourcePlayPosition to PostEvent() in order to use this function, otherwise
+		/// 	it returns AK_Fail, even if the playing ID is valid.
+		/// - The source's position is updated at every audio frame, and the time at which this occurs is stored. 
+		///		When you call this function from your thread, you therefore query the position that was updated in the previous audio frame.
+		///		If in_bExtrapolate is true (default), the returned position is extrapolated using the elapsed time since last 
+		///		sound engine update and the source's playback rate.
 		/// \return AK_Success if successful.
 		///			It returns AK_InvalidParameter if the provided pointer is not valid.
-		///			It returns Ak_Fail if an error occured.
+		///			It returns AK_Fail if an error occured.
 		/// \sa 
 		/// - \ref soundengine_query_pos
 		/// - \ref concept_events
 		extern AKSOUNDENGINE_API AKRESULT GetSourcePlayPosition(
 			AkPlayingID		in_PlayingID,				///< Playing ID returned by AK::SoundEngine::PostEvent()
-			AkTimeMs*		out_puPosition				///< Position of the source (in ms) associated with that playing ID
+			AkTimeMs*		out_puPosition,				///< Position of the source (in ms) associated with that playing ID
+			bool			in_bExtrapolate = true		///< Position is extrapolated based on time elapsed since last sound engine update.
 			);
 
 		/// Stop the current content playing associated to the specified game object ID.
@@ -745,7 +755,9 @@ namespace AK
 
 		/// Stop the current content playing associated to the specified playing ID.
 		extern AKSOUNDENGINE_API void StopPlayingID( 
-			AkPlayingID in_playingID					///< Playing ID to be stopped.
+			AkPlayingID in_playingID,											///< Playing ID to be stopped.
+			AkTimeMs in_uTransitionDuration = 0,								///< Fade duration
+			AkCurveInterpolation in_eFadeCurve = AkCurveInterpolation_Linear	///< Curve type to be used for the transition
 			);
 
 		//@}
@@ -2018,82 +2030,119 @@ namespace AK
 		//@{
 
 		/// Set the value of a real-time parameter control (by ID).
-		/// \return Always returns AK_Success
+		/// With this function, you may set a game parameter value on global scope or on game object scope. 
+		/// Game object scope supersedes global scope. Game parameter values set on global scope are applied to all 
+		/// game objects that not yet registered, or already registered but not overriden with a value on game object scope.
+		/// To set a game parameter value on global scope, pass AK_INVALID_GAME_OBJECT as the game object. 
+		/// Note that busses ignore RTPCs when they are applied on game object scope. Thus, you may only change bus 
+		/// or bus plugins properties by calling this function with AK_INVALID_GAME_OBJECT.
+		/// Refer to \ref soundengine_rtpc_pergameobject, \ref soundengine_rtpc_buses and 
+		/// \ref soundengine_rtpc_effects for more details on RTPC scope.
+		/// \return Always AK_Success
 		/// \sa 
 		/// - \ref soundengine_rtpc
 		/// - AK::SoundEngine::GetIDFromString()
         extern AKSOUNDENGINE_API AKRESULT SetRTPCValue( 
-			AkRtpcID in_rtpcID, 						///< ID of the RTPC
-			AkRtpcValue in_value, 						///< Value to set
+			AkRtpcID in_rtpcID, 									///< ID of the game parameter
+			AkRtpcValue in_value, 									///< Value to set
 			AkGameObjectID in_gameObjectID = AK_INVALID_GAME_OBJECT ///< Associated game object ID
 		    );
 
 		/// Set the value of a real-time parameter control (by unicode string name).
+		/// With this function, you may set a game parameter value on global scope or on game object scope. 
+		/// Game object scope supersedes global scope. Game parameter values set on global scope are applied to all 
+		/// game objects that not yet registered, or already registered but not overriden with a value on game object scope.
+		/// To set a game parameter value on global scope, pass AK_INVALID_GAME_OBJECT as the game object. 
+		/// Note that busses ignore RTPCs when they are applied on game object scope. Thus, you may only change bus 
+		/// or bus plugins properties by calling this function with AK_INVALID_GAME_OBJECT.
+		/// Refer to \ref soundengine_rtpc_pergameobject, \ref soundengine_rtpc_buses and 
+		/// \ref soundengine_rtpc_effects for more details on RTPC scope.
 		/// \return 
 		/// - AK_Success if successful
-		/// - AK_IDNotFound if the RTPC name was not resolved to an existing ID\n
-		/// Make sure that the banks were generated with the "include string" option.
+		/// - AK_IDNotFound if in_pszRtpcName is NULL.
 		/// \aknote Strings are case-sensitive. \endaknote
 		/// \sa 
 		/// - \ref soundengine_rtpc
         extern AKSOUNDENGINE_API AKRESULT SetRTPCValue( 
-			const wchar_t* in_pszRtpcName,				///< Name of the RTPC (Unicode string)
-			AkRtpcValue in_value, 						///< Value to set
+			const wchar_t* in_pszRtpcName,							///< Name of the game parameter (Unicode string)
+			AkRtpcValue in_value, 									///< Value to set
 			AkGameObjectID in_gameObjectID = AK_INVALID_GAME_OBJECT ///< Associated game object ID
 		    );
 
 		/// Set the value of a real-time parameter control (by ansi string name).
+		/// With this function, you may set a game parameter value on global scope or on game object scope. 
+		/// Game object scope supersedes global scope. Game parameter values set on global scope are applied to all 
+		/// game objects that not yet registered, or already registered but not overriden with a value on game object scope.
+		/// To set a game parameter value on global scope, pass AK_INVALID_GAME_OBJECT as the game object. 
+		/// Note that busses ignore RTPCs when they are applied on game object scope. Thus, you may only change bus 
+		/// or bus plugins properties by calling this function with AK_INVALID_GAME_OBJECT.
+		/// Refer to \ref soundengine_rtpc_pergameobject, \ref soundengine_rtpc_buses and 
+		/// \ref soundengine_rtpc_effects for more details on RTPC scope.
 		/// \return 
 		/// - AK_Success if successful
-		/// - AK_IDNotFound if the RTPC name was not resolved to an existing ID\n
-		/// Make sure that the banks were generated with the "include string" option.
+		/// - AK_IDNotFound if in_pszRtpcName is NULL.
 		/// \aknote Strings are case-sensitive. \endaknote
 		/// \sa 
 		/// - \ref soundengine_rtpc
         extern AKSOUNDENGINE_API AKRESULT SetRTPCValue( 
-			const char* in_pszRtpcName,					///< Name of the RTPC (Ansi string)
-			AkRtpcValue in_value, 						///< Value to set
+			const char* in_pszRtpcName,								///< Name of the game parameter (Ansi string)
+			AkRtpcValue in_value, 									///< Value to set
 			AkGameObjectID in_gameObjectID = AK_INVALID_GAME_OBJECT ///< Associated game object ID
 		    );
 
-		/// Resets the value of the game parameter to its default value, as specified in the Wwise project.
-		/// \return 
-		/// - AK_Success if successful
+		/// Reset the value of the game parameter to its default value, as specified in the Wwise project.
+		/// With this function, you may reset a game parameter to its default value on global scope or on game object scope. 
+		/// Game object scope supersedes global scope. Game parameter values reset on global scope are applied to all 
+		/// game objects that were not overriden with a value on game object scope.
+		/// To reset a game parameter value on global scope, pass AK_INVALID_GAME_OBJECT as the game object. 
+		/// Refer to \ref soundengine_rtpc_pergameobject, \ref soundengine_rtpc_buses and 
+		/// \ref soundengine_rtpc_effects for more details on RTPC scope.
+		/// \return Always AK_Success
 		/// \sa 
 		/// - \ref soundengine_rtpc
 		/// - AK::SoundEngine::GetIDFromString()
 		/// - AK::SoundEngine::SetRTPCValue()
 		extern AKSOUNDENGINE_API AKRESULT ResetRTPCValue(
-			AkRtpcID in_idParam,						///< ID of the game parameter
-			AkGameObjectID in_GameObjID = AK_INVALID_GAME_OBJECT ///< Associated game object ID
+			AkRtpcID in_rtpcID, 									///< ID of the game parameter
+			AkGameObjectID in_gameObjectID = AK_INVALID_GAME_OBJECT	///< Associated game object ID
 			);
 
-		/// Resets the value of the game parameter to its default value, as specified in the Wwise project.
+		/// Reset the value of the game parameter to its default value, as specified in the Wwise project.
+		/// With this function, you may reset a game parameter to its default value on global scope or on game object scope. 
+		/// Game object scope supersedes global scope. Game parameter values reset on global scope are applied to all 
+		/// game objects that were not overriden with a value on game object scope.
+		/// To reset a game parameter value on global scope, pass AK_INVALID_GAME_OBJECT as the game object. 
+		/// Refer to \ref soundengine_rtpc_pergameobject, \ref soundengine_rtpc_buses and 
+		/// \ref soundengine_rtpc_effects for more details on RTPC scope.
 		/// \return 
 		/// - AK_Success if successful
-		/// - AK_IDNotFound if the RTPC name was not resolved to an existing ID\n
-		/// Make sure that the banks were generated with the "include string" option.
+		/// - AK_IDNotFound if in_pszParamName is NULL.
 		/// \aknote Strings are case-sensitive. \endaknote
 		/// \sa 
 		/// - \ref soundengine_rtpc
 		/// - AK::SoundEngine::SetRTPCValue()
 		extern AKSOUNDENGINE_API AKRESULT ResetRTPCValue(
-			const wchar_t* in_pszParamName,							///< Name of the game parameter (Unicode string)
-			AkGameObjectID in_GameObjID = AK_INVALID_GAME_OBJECT	///< Associated game object ID
+			const wchar_t* in_pszRtpcName,							///< Name of the game parameter (Unicode string)
+			AkGameObjectID in_gameObjectID = AK_INVALID_GAME_OBJECT	///< Associated game object ID
 			);
 
-		/// Resets the value of the game parameter to its default value, as specified in the Wwise project.
+		/// Reset the value of the game parameter to its default value, as specified in the Wwise project.
+		/// With this function, you may reset a game parameter to its default value on global scope or on game object scope. 
+		/// Game object scope supersedes global scope. Game parameter values reset on global scope are applied to all 
+		/// game objects that were not overriden with a value on game object scope.
+		/// To reset a game parameter value on global scope, pass AK_INVALID_GAME_OBJECT as the game object. 
+		/// Refer to \ref soundengine_rtpc_pergameobject, \ref soundengine_rtpc_buses and 
+		/// \ref soundengine_rtpc_effects for more details on RTPC scope.
 		/// \return 
 		/// - AK_Success if successful
-		/// - AK_IDNotFound if the RTPC name was not resolved to an existing ID\n
-		/// Make sure that the banks were generated with the "include string" option.
+		/// - AK_IDNotFound if in_pszParamName is NULL.
 		/// \aknote Strings are case-sensitive. \endaknote
 		/// \sa 
 		/// - \ref soundengine_rtpc
 		/// - AK::SoundEngine::SetRTPCValue()
 		extern AKSOUNDENGINE_API AKRESULT ResetRTPCValue(
-			const char* in_pszParamName,							///< Name of the game parameter (Ansi string)
-			AkGameObjectID in_GameObjID = AK_INVALID_GAME_OBJECT	///< Associated game object ID
+			const char* in_pszRtpcName,								///< Name of the game parameter  (Ansi string)
+			AkGameObjectID in_gameObjectID = AK_INVALID_GAME_OBJECT	///< Associated game object ID
 			);
 
 		/// Set the state of a switch group (by IDs).
@@ -2295,6 +2344,17 @@ namespace AK
 			bool	in_bIsBypassed						///< True: bypass the specified environment
 			);
 
+		/// Set an effect shareset at the specified audio node and effect slot index.
+		/// This adds a reference on the audio node to an existing ShareSet.
+		/// \aknote This function has unspecified behavior when adding an effect to a currently playing
+		/// bus which does not have any effects, or removing the last effect on a currently playing bus.
+		/// \return Always returns AK_Success
+		extern AKSOUNDENGINE_API AKRESULT SetEffect( 
+			AkUniqueID in_audioNodeID,					///< Can be a member of the bus, actor-mixer or interactive music hierarchy
+			AkUInt32 in_uFXIndex,						///< Effect slot index (0-3)
+			AkUniqueID in_shareSetID					///< ShareSet ID; pass AK_INVALID_UNIQUE_ID to clear the effect slot
+			);
+
 		/// Set a game object's obstruction and occlusion levels.
 		/// This method is used to affect how an object should be heard by a specific listener.
 		/// \sa 
@@ -2328,10 +2388,20 @@ namespace AK
 		/// This function is not thread-safe. 
 		/// \return AK_Success if successful, AK_Fail if there was a problem starting the output capture.
 		///			In optimized mode, this function returns AK_NotCompatible.
-		/// \remark This function is provided as a utility tool only. It does nothing if it is 
+		/// \remark 
+		///		- This function is provided as a utility tool only. It does nothing if it is 
 		///			called in the optimized/release configuration and return AK_NotCompatible.
+		///		- The sound engine opens a stream for writing using AK::IAkStreamMgr::CreateStd(). If you are using the
+		///			default implementation of the Stream Manager, file opening is executed in your implementation of 
+		///			the Low-Level IO interface AK::StreamMgr::IAkFileLocationResolver::Open(). The following 
+		///			AkFileSystemFlags are passed: uCompanyID = AKCOMPANYID_AUDIOKINETIC and uCodecID = AKCODECID_PCM,
+		///			and the AkOpenMode is AK_OpenModeWriteOvrwr. Refer to \ref streamingmanager_lowlevel_location for
+		///			more details on managing the deployement of your Wwise generated data.
 		/// \sa 
 		/// - AK::SoundEngine::StopOutputCapture()
+		/// - AK::StreamMgr::SetFileLocationResolver()
+		/// - \ref streamingdevicemanager
+		/// - \ref streamingmanager_lowlevel_location
 		extern AKSOUNDENGINE_API AKRESULT StartOutputCapture( 
 			const AkOSChar* in_CaptureFileName				///< Name of the output capture file
 			);

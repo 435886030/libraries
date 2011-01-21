@@ -49,6 +49,14 @@ namespace AK
 	{
 		/// Query namespace
 		/// \remarks The functions in this namespace are thread-safe, unless stated otherwise.
+		///
+		/// \warning The functions in this namespace might stall for several milliseconds before returning (as they
+		/// cannot execute while the main sound engine thread is busy). They should therefore not be called from any 
+		/// game critical thread, such as the main game loop.
+		///
+		/// \warning There might be a significant delay between a Sound Engine call (such as PostEvent) and
+		/// the information being reflected in a Query (such as GetIsGameObjectActive). 
+
 		namespace Query
 		{
 			////////////////////////////////////////////////////////////////////////
@@ -105,37 +113,56 @@ namespace AK
 			/// @name Game Syncs
 			//@{
 
+			/// Enum used to request a specific RTPC Value.
+			/// Also used to inform the user of where the RTPC Value comes from.
+			///
+			/// For example, the user may request the GameObject specific value by specifying RTPCValue_GameObject
+			/// and can receive the Global Value if there was no GameObject specific value, and even the 
+			/// default value is there was no Global value either.
+			/// \sa 
+			/// - \ref GetRTPCValue
+			enum RTPCValue_type
+			{
+				RTPCValue_Default,		///< The value is the Default RTPC.
+				RTPCValue_Global,		///< The value is the Global RTPC.
+				RTPCValue_GameObject,	///< The value is the game object specific RTPC.
+				RTPCValue_Unavailable	///< The value is not available for the RTPC specified.
+			};
+
 			/// Get the value of a real-time parameter control (by ID).
 			/// \return AK_Success if succeeded, AK_IDNotFound if the game object was not registered, or AK_Fail if the RTPC value could not be obtained
 			/// \sa 
 			/// - \ref soundengine_rtpc
+			/// - \ref RTPCValue_type
 			extern AKSOUNDENGINE_API AKRESULT GetRTPCValue( 
-				AkRtpcID in_rtpcID, 						///< ID of the RTPC
-				AkGameObjectID in_gameObjectID,				///< Associated game object ID
-				AkRtpcValue& out_rValue, 					///< Value returned
-				bool&		out_rGlobal						///< Is this value obtained from global object? (Y/N)
+				AkRtpcID in_rtpcID, 				///< ID of the RTPC
+				AkGameObjectID in_gameObjectID,		///< Associated game object ID
+				AkRtpcValue& out_rValue, 			///< Value returned
+				RTPCValue_type&	io_rValueType		///< In/Out value, the user must specify the requested type. The function will return in this variable the type of the returned value.
 				);
 
 			/// Get the value of a real-time parameter control (by unicode string name).
 			/// \return AK_Success if succeeded, AK_IDNotFound if the game object was not registered or the rtpc name could not be found, or AK_Fail if the RTPC value could not be obtained
 			/// \sa 
 			/// - \ref soundengine_rtpc
+			/// - \ref RTPCValue_type
 			extern AKSOUNDENGINE_API AKRESULT GetRTPCValue( 
-				const wchar_t* in_pszRtpcName,					///< Unicode string name of the RTPC
-				AkGameObjectID in_gameObjectID,				///< Associated game object ID
-				AkRtpcValue& out_rValue, 					///< Value returned
-				bool&		out_rGlobal						///< Is this value obtained from global object? (Y/N)
+				const wchar_t* in_pszRtpcName,		///< Unicode string name of the RTPC
+				AkGameObjectID in_gameObjectID,		///< Associated game object ID
+				AkRtpcValue& out_rValue, 			///< Value returned
+				RTPCValue_type&	io_rValueType		///< In/Out value, the user must specify the requested type. The function will return in this variable the type of the returned value.
 				);
 
 			/// Get the value of a real-time parameter control (by ansi string name).
 			/// \return AK_Success if succeeded, AK_IDNotFound if the game object was not registered or the rtpc name could not be found, or AK_Fail if the RTPC value could not be obtained
 			/// \sa 
 			/// - \ref soundengine_rtpc
+			/// - \ref RTPCValue_type
 			extern AKSOUNDENGINE_API AKRESULT GetRTPCValue( 
-				const char* in_pszRtpcName,					///< Ansi string name of the RTPC
-				AkGameObjectID in_gameObjectID,				///< Associated game object ID
-				AkRtpcValue& out_rValue, 					///< Value returned
-				bool&		out_rGlobal						///< Is this value obtained from global object? (Y/N)
+				const char* in_pszRtpcName,			///< Ansi string name of the RTPC
+				AkGameObjectID in_gameObjectID,		///< Associated game object ID
+				AkRtpcValue& out_rValue, 			///< Value returned
+				RTPCValue_type&	io_rValueType		///< In/Out value, the user must specify the requested type. The function will return in this variable the type of the returned value.
 				);
 
 			/// Get the state of a switch group (by IDs).

@@ -147,7 +147,6 @@ namespace AK
 {
     /// \name Profiling interfaces.
     //@{
-#ifndef AK_OPTIMIZED
     
     /// Profiling interface of streams.
 	/// \warning The functions in this interface are not thread-safe, unless stated otherwise.
@@ -275,7 +274,6 @@ namespace AK
 			AkUInt32    in_uDeviceIndex     ///< Device index: [0,numDevices[
             ) = 0;
     };
-#endif
     //@}
 
     /// \name High-level streams API.
@@ -613,11 +611,9 @@ namespace AK
 
         /// \name Profiling.
         //@{
-#ifndef AK_OPTIMIZED
         /// Get the profiling interface.
         /// \return The interface of the Stream Manager profiler
         virtual IAkStreamMgrProfile * GetStreamMgrProfile() = 0;
-#endif
         //@}
 
 

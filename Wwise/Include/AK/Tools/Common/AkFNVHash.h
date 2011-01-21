@@ -65,6 +65,7 @@ namespace AK
 	};
 
 	#ifndef AK_PS3
+	#pragma warning(push)
 	#pragma warning(disable:4127)
 	#endif
 
@@ -102,7 +103,7 @@ namespace AK
 	}
 
 	#ifndef AK_PS3
-	#pragma warning(default:4127)
+	#pragma warning(pop)
 	#endif
 
 	typedef FNVHash<Hash32> FNVHash32;

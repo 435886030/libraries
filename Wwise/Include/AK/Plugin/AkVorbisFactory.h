@@ -46,4 +46,14 @@ AKVORBISDECODER_API IAkSoftwareCodec* CreateVorbisFilePlugin(
 	void* in_pCtx 			///< File source decoder context
 	);
 
+/*
+Use the following code to register this codec:
+
+	AK::SoundEngine::RegisterCodec(
+		AKCOMPANYID_AUDIOKINETIC,
+		AKCODECID_VORBIS,
+		CreateVorbisFilePlugin,
+		CreateVorbisBankPlugin );
+*/
+
 #endif // _AK_VORBISFACTORY_H_

@@ -10,9 +10,6 @@
 #include <AK/Tools/Common/AkObject.h>
 #include <AK/Tools/Common/AKAssert.h>
 
-extern AkMemPoolId g_DefaultPoolId;
-extern AkMemPoolId g_LEngineDefaultPoolId;
-
 #define AK_DEFINE_ARRAY_POOL( _name_, _poolID_ )	\
 struct _name_										\
 {													\
@@ -195,6 +192,8 @@ public:
 		return AK_Success;
 	}
 
+	AkUInt32 Reserved() const { return m_ulReserved; }
+
 	/// Term the array. Must be called before destroying the object.
 	void Term()
 	{
@@ -320,8 +319,7 @@ public:
     T& operator[](unsigned int uiIndex)
     {
         AKASSERT( m_pItems );
-        AKASSERT( uiIndex >= 0 &&
-                  uiIndex < Length() );
+        AKASSERT( uiIndex < Length() );
         return m_pItems[uiIndex];
     }
 
@@ -329,8 +327,7 @@ public:
 	/// Returns the pointer to the item to be filled.
 	T * Insert(unsigned int in_uIndex)
 	{
-        AKASSERT( in_uIndex >= 0 &&
-                  in_uIndex <= Length() );
+        AKASSERT( in_uIndex <= Length() );
 
 		size_t cItems = Length();
 

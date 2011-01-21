@@ -24,7 +24,13 @@
 	//----------------------------------------------------------------------------------------------------
 	// Mac
 	//----------------------------------------------------------------------------------------------------
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
+	#include <AK/SoundEngine/Platforms/iPhone/AkSimd.h>
+#else
+
 #include <AK/SoundEngine/Platforms/Mac/AkSimd.h>
+#endif
 #elif defined( XBOX360 )
 	//----------------------------------------------------------------------------------------------------
 	// XBOX360

@@ -35,7 +35,7 @@ namespace AK
 		/// - \ref fx_memory_alloc
 	    virtual void * dMalloc( 
             size_t	 in_uSize,		///< Allocation size
-            char*  in_pszFile,	///< Allocation file name (for tracking purposes) (Ansi string)
+            const char*  in_pszFile,///< Allocation file name (for tracking purposes) (Ansi string)
 		    AkUInt32 in_uLine		///< Allocation line number (for tracking purposes)
 		    ) = 0;
 

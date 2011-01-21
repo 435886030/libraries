@@ -152,6 +152,7 @@ public:
 	/// Constructor.
 	AkListBareLight()
 	{
+		Init();
 	}
 
 	/// Destructor.

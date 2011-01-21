@@ -32,11 +32,17 @@ namespace AK
 				const GUID & in_guidPlatform,			///< The unique ID of the platform being converted for.
 				LPCWSTR in_szSourceFile,				///< Source File to convert data from.
 				LPCWSTR in_szDestFile,					///< DestinationFile, must be created by the plug-in.
+				AkUInt32 in_uSampleRate,				///< The target sample rate for the converted file, passing 0 will default to the platform default
+				AkUInt32 in_uBlockLength,				///< The block length, passing 0 will default to the platform default
 				AK::Wwise::IProgress* in_pProgress,		///< Optional Progress Bar controller.
 				IWriteString* io_pError					///< Optional error string that can be displayed if ConversionResult is not successful
 				) = 0;
 
-			virtual ULONG GetCurrentConversionSettingsHash() = 0;
+			virtual ULONG GetCurrentConversionSettingsHash(
+				const GUID & in_guidPlatform,			///< The unique ID of the platform being converted for.
+				AkUInt32 in_uSampleRate = 0,			///< The target sample rate for the converted file, passing 0 will default to the platform default.
+				AkUInt32 in_uBlockLength = 0			///< The block length, passing 0 will default to the platform default.
+				) = 0;
 		};
 
 		/// Plug-in property set interface. An instance of this class is created and
@@ -157,8 +163,8 @@ namespace AK
 				) const = 0;
 		};
 
-		/// Plug-in object Data interface. An instance of this class is created and
-		/// assigned to each plug-in that supports data files handling
+		/// Plug-in object media interface. An instance of this class is created and
+		/// assigned to each plug-in that supports media file handling.
 		/// \warning The functions in this interface are not thread-safe, unless stated otherwise.
 		/// \sa
 		/// - AK::Wwise::IAudioPlugin::SetPluginObjectMedia()
@@ -166,32 +172,66 @@ namespace AK
 		{
 		public:
 			
-			/// Requests to add the specified file s a data input file.
-			virtual bool AddMediaSource( 
-				LPCWSTR in_pszFilePathToImport
+			/// Requests to set the specified file as a data input file.
+			virtual bool SetMediaSource( 
+				LPCWSTR in_pszFilePathToImport,	///< File path
+				unsigned int in_Index = 0,		///< Optional index
+				bool in_bReplace = false		///< Optional: set to true to replace existing file if the name is already in used
 				) = 0;
 
 			/// Requests to remove the specified index file s a data input file.
 			virtual void RemoveMediaSource( 
-				unsigned int in_index = 0	///< Optionnal index
+				unsigned int in_Index = 0 	///< Optional index
 				) = 0;
 
 			/// Retrieve the number of dataSource, it will be then possible to
 			/// call GetMediaFileName or RemoveMediaSource using the provided index
 			virtual unsigned int GetMediaSourceCount() const = 0;
 
-			/// Retrieve the file name of the plug-in data at the specified index.
-			/// This is not the full path, this is the relative path from the original folder path.
+			/// Retrieve the file name of the source plug-in data relative to the 
+			/// original directory at the specified index.
 			/// Mostly used to allow the Plug-in to display this information.
 			/// \return Number of characters written to the buffer, zero if failed.
-			virtual unsigned int GetMediaFileName(
-				LPWSTR out_pszListName,			///< Relative path of the file to be imported
-				unsigned int in_uiBufferSize,	///< Size of the provided buffer
-				unsigned int in_index = 0		///< Optionnal index
+			virtual unsigned int GetMediaSourceFileName(
+				LPWSTR out_pszFileName,			///< Relative path of the associated file
+				unsigned int in_uiBufferSize,	///< Size of the provided string buffer
+				unsigned int in_Index = 0		///< Optional index
+				) const = 0;
+
+			/// Retrieve the file path of the source plug-in data at the specified index.
+			/// \return Number of characters written to the buffer, zero if failed.
+			virtual unsigned int GetMediaSourceOriginalFilePath(
+				LPWSTR out_pszFileName,			///< Relative path of the associated file
+				unsigned int in_uiBufferSize,	///< Size of the provided string buffer
+				unsigned int in_Index = 0		///< Optional index
+				) const = 0;
+
+			/// Retrieve the file path of the converted plug-in data at the specified index.
+			/// \return Number of characters written to the buffer, zero if failed.
+			virtual unsigned int GetMediaSourceConvertedFilePath(
+				LPWSTR out_pszFileName,			///< Relative path of the associated file
+				unsigned int in_uiBufferSize,	///< Size of the provided string buffer
+				const GUID & in_guidPlatform,	///< The GUID of the platform
+				unsigned int in_Index = 0		///< Optional index
 				) const = 0;
 
 			/// Request Wwise to perform any required conversion on the data
-			virtual void ForceConversion() = 0;
+			virtual void InvalidateMediaSource( unsigned int in_Index = 0 ) = 0;
+
+			/// Obtain the Original directory for the plugin
+			/// \return Number of characters written to the buffer, zero if failed.
+			virtual unsigned int GetOriginalDirectory(
+				LPWSTR out_pszDirectory,		///< Pointer to the buffer that will hold the directory string
+				unsigned int in_uiBufferSize	///< Size of the buffer pointed by out_pszDirectory
+				) const = 0;
+
+			/// Obtain the Converted directory for the plugin and platform
+			/// \return Number of characters written to the buffer, zero if failed.
+			virtual unsigned int GetConvertedDirectory(
+				LPWSTR out_pszDirectory,		///< Pointer to the buffer that will hold the directory string
+				unsigned int in_uiBufferSize,	///< Size of the buffer pointed by out_pszDirectory
+				const GUID & in_guidPlatform	///< The GUID of the platform
+				) const = 0;
 		};
 
 		/// Wwise plug-in interface. This must be implemented for each source or
@@ -247,9 +287,9 @@ namespace AK
 			/// Set plugin object media, that allows to create and manage media files
 			/// Use this interface to manage plugin media objects.
 			///
-			/// NOTE: If the plug-in does not handle "Plugin Media", this function should be 
+			/// NOTE: If the plug-in does not handle plugin media, this function should be 
 			/// implemented as a void function by the plug-in.
-			/// PluginMedia is an "In development" concept that is not fully exposed nor documented
+			/// Plugin media is an "In development" concept that is not fully exposed nor documented
 			/// at the moment.
 			///
 			/// \warning This function is guaranteed to be called by a single thread at a time.
@@ -448,7 +488,7 @@ namespace AK
 
 			/// Retrieve a pointer to the class implementing IPluginObjectMedia. Plug-ins using the media sources
 			/// functionality can simply return a pointer to themseles while other not using the functionality should return NULL
-			/// PluginMedia is an "In development" concept that is not fully exposed nor documented
+			/// Plugin media is an "In development" concept that is not fully exposed nor documented
 			/// at the moment.
 			virtual IPluginMediaConverter* GetPluginMediaConverterInterface() = 0;
 		};

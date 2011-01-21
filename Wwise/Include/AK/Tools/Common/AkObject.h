@@ -14,6 +14,9 @@
 
 #include <AK/SoundEngine/Common/AkMemoryMgr.h>
 
+extern AKSOUNDENGINE_API AkMemPoolId g_DefaultPoolId;
+extern AKSOUNDENGINE_API AkMemPoolId g_LEngineDefaultPoolId;
+
 //-----------------------------------------------------------------------------
 // Placement New definition. Use like this:
 // AkPlacementNew( memorybuffer ) T(); // where T is your type constructor

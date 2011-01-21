@@ -32,6 +32,11 @@ enum AkCallbackType
 	AK_MusicSyncEntry				= 0x0400,	///< Enable notifications on Music Entry Point.
 	AK_MusicSyncExit				= 0x0800,	///< Enable notifications on Music Exit Point.
 
+	AK_MusicSyncGrid				= 0x1000,	///< Enable notifications on Music Grid.
+	AK_MusicSyncUserCue				= 0x2000,	///< Enable notifications on Music User Cue.
+
+	AK_MusicSyncPoint				= 0x4000,	///< Enable notifications on Music synchronisation point.
+
 	AK_MusicSyncAll					= 0xff00,	///< Use this flag if you want to receive all notifications concerning AK_MusicSync registration.
 
 	AK_CallbackBits					= 0xffff,	///< Bitmask for all callback types.
@@ -110,7 +115,9 @@ struct AkSpeakerVolumeMatrixCallbackInfo : public AkEventCallbackInfo
 	bool bIsEnvironmental;			///< True if the sound is feeding an environmental bus
 };
 
-/// Callback information structure corresponding to Ak_MusicSync
+/// Callback information structure corresponding to Ak_MusicSync.
+/// If you need the Tempo, you can compute it using the fBeatDuration
+/// Tempo (beats per minute) = 60/fBeatDuration
 /// \sa 
 /// - \ref soundengine_events
 /// - AK::SoundEngine::PostEvent()
@@ -118,9 +125,11 @@ struct AkSpeakerVolumeMatrixCallbackInfo : public AkEventCallbackInfo
 struct AkMusicSyncCallbackInfo : public AkCallbackInfo
 {
 	AkPlayingID playingID;			///< Playing ID of Event, returned by PostEvent()
-	AkCallbackType musicSyncType;	///< Would be either AK_MusicSyncEntry, AK_MusicSyncBeat, AK_MusicSyncBar or AK_MusicSyncExit.
+	AkCallbackType musicSyncType;	///< Would be either AK_MusicSyncEntry, AK_MusicSyncBeat, AK_MusicSyncBar, AK_MusicSyncExit, AK_MusicSyncGrid, AK_MusicSyncPoint or AK_MusicSyncUserCue.
 	AkReal32 fBeatDuration;			///< Beat Duration in seconds.
 	AkReal32 fBarDuration;			///< Bar Duration in seconds.
+	AkReal32 fGridDuration;			///< Grid duration in seconds.
+	AkReal32 fGridOffset;			///< Grid offset in seconds.
 };
 
 /// Function called on completion of an event, or when a marker is reached.

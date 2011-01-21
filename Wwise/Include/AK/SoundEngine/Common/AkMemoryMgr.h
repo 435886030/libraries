@@ -266,13 +266,13 @@ namespace AK
 		
         /// Enables or disables error notifications posted by a memory pool.
         /// The notifications are enabled by default when creating a pool.
-        /// They are always disabled in the AK_OPTIMIZED build.
+        /// They are always disabled in the Release build.
         /// \return AK_Success if the pool exists
 		/// \sa
 		/// - \ref memorymanager
 		extern AKMEMORYMGR_API AKRESULT SetMonitoring(
             AkMemPoolId     in_poolId,			///< ID of memory pool
-            bool            in_bDoMonitor       ///< Enables error monitoring (has no effect in AK_OPTIMIZED build)
+            bool            in_bDoMonitor       ///< Enables error monitoring (has no effect in Release build)
             );
 
 	    /// Destroy a memory pool.
@@ -347,7 +347,7 @@ namespace AK
 	    extern AKMEMORYMGR_API void * dMalloc(
 			AkMemPoolId in_poolId,				///< ID of the memory pool
 		    size_t		in_uSize,				///< Number of bytes to allocate
-		    char*	 in_pszFile,				///< Debug file name (Ansi string)
+		    const char *in_pszFile,				///< Debug file name (Ansi string)
 		    AkUInt32	in_uLine				///< Debug line number
 			);
 #else

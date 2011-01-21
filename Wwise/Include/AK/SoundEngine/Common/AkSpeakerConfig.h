@@ -103,12 +103,46 @@ inline void AK_SPEAKER_SETUP_CONVERT_TO_SUPPORTED( AkUInt32 &io_uChannelMask )
 	AK_SPEAKER_SETUP_FIX_SIDE_TO_REAR( io_uChannelMask );
 }
 
-// Returns the number of channels of a given channel configuration.
-inline unsigned int ChannelMaskToNumChannels( AkChannelMask in_uChannelMask )
+/// Returns the number of channels of a given channel configuration.
+static inline unsigned int ChannelMaskToNumChannels( AkChannelMask in_uChannelMask )
 {
 	unsigned int num = 0;
 	while( in_uChannelMask ){ ++num; in_uChannelMask &= in_uChannelMask-1; } // iterate max once per channel.
 	return num;
+}
+
+/// Returns a 'best guess' channel configuration from a given number of channels.
+/// Will return 0 if no guess can be made.
+static inline AkChannelMask ChannelMaskFromNumChannels( unsigned int in_uNumChannels )
+{
+	AkChannelMask uChannelMask = 0;
+
+	switch ( in_uNumChannels )
+	{
+	case 1:
+		uChannelMask = AK_SPEAKER_SETUP_1_0_CENTER;
+		break;
+	case 2:
+		uChannelMask = AK_SPEAKER_SETUP_2_0;
+		break;
+	case 3:
+		uChannelMask = AK_SPEAKER_SETUP_2_1;
+		break;
+	case 4:
+		uChannelMask = AK_SPEAKER_SETUP_4_0;
+		break;
+	case 5:
+		uChannelMask = AK_SPEAKER_SETUP_5_0;
+		break;
+	case 6:
+		uChannelMask = AK_SPEAKER_SETUP_5_1;
+		break;
+	case 8:
+		uChannelMask = AK_SPEAKER_SETUP_7POINT1;
+		break;
+	}
+
+	return uChannelMask;
 }
 
 #endif //_AK_SPEAKERCONFIG_H_

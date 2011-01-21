@@ -26,13 +26,13 @@
 #define AK_WWISESDK_VERSION_MAJOR				2010
 
 /// Wwise SDK minor version
-#define AK_WWISESDK_VERSION_MINOR				1
+#define AK_WWISESDK_VERSION_MINOR				2
 
 /// Wwise SDK sub-minor version
-#define AK_WWISESDK_VERSION_SUBMINOR			2
+#define AK_WWISESDK_VERSION_SUBMINOR			0
 
 /// Wwise SDK build number
-#define AK_WWISESDK_VERSION_BUILD				3554
+#define AK_WWISESDK_VERSION_BUILD				3697
 
 //@}
 

@@ -42,6 +42,7 @@ namespace AK
 #define AK_DECLARE_THREAD_ROUTINE( FuncName )   DWORD WINAPI FuncName(LPVOID lpParameter)
 #define AK_THREAD_RETURN( _param_ )				return (_param_);
 #define AK_THREAD_ROUTINE_PARAMETER             lpParameter
+#define AK_GET_THREAD_ROUTINE_PARAMETER_PTR(type) reinterpret_cast<type*>( AK_THREAD_ROUTINE_PARAMETER )
 #define AK_RETURN_THREAD_OK                     0x00000000
 #define AK_RETURN_THREAD_ERROR                  0x00000001
 #define AK_DEFAULT_STACK_SIZE                   (8192)
@@ -199,6 +200,12 @@ namespace AKPLATFORM
         AKASSERT( *in_pThread );
         ::WaitForSingleObject( *in_pThread, INFINITE );
     }
+
+	/// Returns the calling thread's ID.
+	inline AkThreadID CurrentThread()
+	{
+		return ::GetCurrentThreadId();
+	}
 
 	/// Platform Independent Helper
     inline void AkSleep( AkUInt32 in_ulMilliseconds )
@@ -418,8 +425,17 @@ namespace AKPLATFORM
 	
 	#define AK_UTF16_TO_WCHAR(	in_pdDest, in_pSrc, in_MaxSize )	AKPLATFORM::SafeStrCpy(		in_pdDest, in_pSrc, in_MaxSize )
 	#define AK_WCHAR_TO_UTF16(	in_pdDest, in_pSrc, in_MaxSize )	AKPLATFORM::SafeStrCpy(		in_pdDest, in_pSrc, in_MaxSize )
+	#define AK_UTF16_TO_OSCHAR(	in_pdDest, in_pSrc, in_MaxSize )	AKPLATFORM::SafeStrCpy(		in_pdDest, in_pSrc, in_MaxSize )
 	#define AK_UTF16_TO_CHAR(	in_pdDest, in_pSrc, in_MaxSize )	AKPLATFORM::AkWideCharToChar( in_pSrc, in_MaxSize, in_pdDest )
 	#define AK_CHAR_TO_UTF16(	in_pdDest, in_pSrc, in_MaxSize )	AKPLATFORM::AkCharToWideChar( in_pSrc, in_MaxSize, in_pdDest )		
+
+	/// Read unaligned memory
+	template< typename T >
+	inline T ReadUnaligned( const AkUInt8* in_rptr, AkUInt32 in_bytesToSkip = 0)
+	{
+		T l_Value = l_Value = *( ( T* )(in_rptr + in_bytesToSkip) );
+		return l_Value;
+	}
 }
 
 #endif  // _AK_PLATFORM_FUNCS_H_

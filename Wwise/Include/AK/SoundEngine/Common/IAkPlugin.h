@@ -17,7 +17,7 @@
 #include <AK/Tools/Common/AkLock.h>
 #include <AK/Tools/Common/AkPlatformFuncs.h>
 
-#if defined AK_WIN  || defined AK_MAC
+#if defined AK_CPU_X86  || defined AK_CPU_X86_64
 #include <xmmintrin.h>
 #endif
 
@@ -34,8 +34,6 @@
 
 #ifdef AK_PS3
 #include <AK/Plugin/PluginServices/PS3/MultiCoreServices.h>
-#else
-#include <AK/Plugin/PluginServices/MultiCoreServices.h>
 #endif
 
 #ifdef RVL_OS
@@ -87,6 +85,9 @@ namespace AK
 		/// Effects used as environmentals are always used in Send Mode.
 		/// \return True if the effect is in Send Mode, False otherwise
 		virtual bool IsSendModeEffect() const = 0;
+
+		/// Retrieve the streaming manager access interface.
+		virtual IAkStreamMgr * GetStreamMgr() const = 0;
 
 		/// Retrieve the Playing ID of the event corresponding to this effect instance (if applicable).
 		/// \return AK_INVALID_PLAYING_ID when effect is instantiated on a Bus.
@@ -161,10 +162,7 @@ namespace AK
 		virtual AkUInt16 GetMaxBufferLength( ) const = 0;
 	};
 
-	/// Parameter node interface that must synchronize access to an enclosed parameter structure 
-	/// that may be shared by various instances running in different threads.
-	/// \aknote It is the responsibility of the parameter node implementer to make the parameter structure access
-	/// thread-safe. \endaknote
+	/// Parameter node interface, managing access to an enclosed parameter structure.
 	/// \aknote Plug-ins should declare the AK_USE_PLUGIN_ALLOCATOR() macro in their public interface. \endaknote
 	/// \aknote The implementer of this interface should also expose a static creation function
 	/// that will return a new parameter node instance when required (see \ref se_plugins_overview). \endaknote
@@ -236,35 +234,6 @@ namespace AK
 		/// - AK::Wwise::IAudioPlugin::GetPluginData
 		/// - AK::IAkPluginParam::SetParam
 		static const AkPluginParamID ALL_PLUGIN_DATA_ID = 0x7FFF;
-
-	protected:
-
-		/// Acquire the lock to provide thread-safe access to the effect parameter structure. This is only required when the effect is being
-		/// used by Wwise authoring application. Define AK_OPTIMIZED in the preprocessor defines of the release version of your effect to 
-		/// avoid the performance cost of the critical section. 
-		AkForceInline void LockParams()
-		{
-#ifndef AK_OPTIMIZED
-			m_ParamLock.Lock();
-#endif
-		}
-
-		/// Release the lock to provide thread-safe access to the effect parameter structure. This is only required when the effect is being
-		/// used by Wwise authoring application. Define AK_OPTIMIZED in the preprocessor defines of the release version of your effect to 
-		/// avoid the performance cost of the critical section. 
-		AkForceInline void UnlockParams()
-		{
-#ifndef AK_OPTIMIZED
-			m_ParamLock.Unlock();
-#endif
-		}
-
-		/// Parameter lock declaration to provide thread-safe access to the effect parameter structure. This is only required when the effect is being
-		/// used by the Wwise authoring application. Define AK_OPTIMIZED in the preprocessor defines of the release version of your effect to 
-		/// avoid the performance cost of the critical section. 
-#ifndef AK_OPTIMIZED
-		CAkLock m_ParamLock;	///< Parameter structure lock declaration
-#endif
 	};
 
 	/// Wwise sound engine plug-in interface. Shared functionality across different plug-in types.
@@ -302,19 +271,6 @@ namespace AK
 		virtual AKRESULT GetPluginInfo( 
 			AkPluginInfo & out_rPluginInfo	///< Reference to the plug-in information structure to be retrieved
 			) = 0;
-
-		/// Software effect plug-in DSP execution.
-		/// \aknote The effect can output as much as wanted up to MaxFrames(). All sample frames passed uValidFrames at input time are 
-		/// not initialized and it is the responsibility of the effect to do so. When modifying the number of valid frames within execution
-		/// (e.g. to flush delay lines) the effect should notify the pipeline by updating uValidFrames accordingly.
-		/// \aknote The effect will stop being called by the pipeline when AK_NoMoreData is returned in the the eState field of the AkAudioBuffer structure.
-		virtual void Execute( 
-				AkAudioBuffer *							io_pBuffer		///< In/Out audio buffer data structure (in-place processing)
-#ifdef AK_PS3
-				, AK::MultiCoreServices::DspProcess*&	out_pDspProcess	///< Asynchronous DSP process utilities on PS3
-#endif
-				) = 0;
-
 	};
 
 	/// Software effect plug-in interface (see \ref soundengine_plugins_effects).
@@ -349,7 +305,61 @@ namespace AK
 		/// This function will be called only after the FX initialization was completed.
 		/// \return The estimated time in milliseconds.
 		virtual AkUInt32 GetTailTime() = 0;
+#endif		
+	};
+
+	/// Software effect plug-in interface for in-place processing (see \ref soundengine_plugins_effects).
+	class IAkInPlaceEffectPlugin : public IAkEffectPlugin
+	{
+	public:
+		/// Software effect plug-in DSP execution for in-place processing.
+		/// \aknote The effect should process all the input data (uValidFrames) as long as AK_DataReady is passed in the eState field. 
+		/// When the input is finished (AK_NoMoreData), the effect can output more sample than uValidFrames up to MaxFrames() if desired. 
+		/// All sample frames beyond uValidFrames are not initialized and it is the responsibility of the effect to do so when outputting an effect tail.
+		/// The effect must notify the pipeline by updating uValidFrames if more frames are produced during the effect tail.
+		/// \aknote The effect will stop being called by the pipeline when AK_NoMoreData is returned in the the eState field of the AkAudioBuffer structure.
+		/// See \ref iakmonadiceffect_execute_general.
+		virtual void Execute( 
+				AkAudioBuffer *							io_pBuffer		///< In/Out audio buffer data structure (in-place processing)
+#ifdef AK_PS3
+				, AK::MultiCoreServices::DspProcess*&	out_pDspProcess	///< Asynchronous DSP process utilities on PS3
 #endif
+				) = 0;		
+
+		/// Skips execution of some frames, when the voice is virtual playing from elapsed time.  
+		/// This can be used to simulate processing that would have taken place (e.g. update internal state).
+		/// Return AK_DataReady or AK_NoMoreData, depending if there would be audio output or not at that point.
+		virtual AKRESULT TimeSkip( 
+			AkUInt32 in_uFrames	///< Number of frames the audio processing should advance.
+			) = 0;
+	};
+		
+
+	/// Software effect plug-in interface for out-of-place processing (see \ref soundengine_plugins_effects).
+	class IAkOutOfPlaceEffectPlugin : public IAkEffectPlugin
+	{
+	public:
+		/// Software effect plug-in for out-of-place processing.
+		/// \aknote An input buffer is provided and will be passed back to Execute() (with an advancing offset based on uValidFrames consumption by the plug-in).
+		/// The output buffer should be filled entirely by the effect (at which point it can report AK_DataReady) except on last execution where AK_NoMoreData should be used.
+		/// AK_DataNeeded should be used when more input data is necessary to continue processing. 
+		/// \aknote Only the output buffer eState field is looked at by the pipeline to determine the effect state.
+		/// See \ref iakmonadiceffect_execute_outofplace.
+		virtual void Execute( 
+				AkAudioBuffer *							in_pBuffer,		///< Input audio buffer data structure
+				AkUInt32								in_uInOffset,	///< Offset position into input buffer data
+				AkAudioBuffer *							out_pBuffer		///< Output audio buffer data structure
+#ifdef AK_PS3
+				, AK::MultiCoreServices::DspProcess*&	out_pDspProcess	///< Asynchronous DSP process utilities on PS3
+#endif
+				) = 0;
+
+		/// Skips execution of some frames, when the voice is virtual playing from elapsed time.  
+		/// This can be used to simulate processing that would have taken place (e.g. update internal state).
+		/// Return AK_DataReady or AK_NoMoreData, depending if there would be audio output or not at that point.
+		virtual AKRESULT TimeSkip(
+			AkUInt32 &io_uFrames	///< Number of frames the audio processing should advance.  The output value should be the number of frames that would be consumed to output the number of frames this parameter has at the input of the function.
+			) = 0;
 	};
 
 	/// Wwise sound engine source plug-in interface (see \ref soundengine_plugins_source).
@@ -404,6 +414,18 @@ namespace AK
 		virtual AKRESULT Seek( 
 			AkUInt32 /* in_uPosition */	///< Position to seek to, in samples, at the rate specified in AkAudioFormat (see AK::IAkSourcePlugin::Init()).
 			) { return AK_Success; }
+
+		/// Software effect plug-in DSP execution.
+		/// \aknote The effect can output as much as wanted up to MaxFrames(). All sample frames passed uValidFrames at input time are 
+		/// not initialized and it is the responsibility of the effect to do so. When modifying the number of valid frames within execution
+		/// (e.g. to flush delay lines) the effect should notify the pipeline by updating uValidFrames accordingly.
+		/// \aknote The effect will stop being called by the pipeline when AK_NoMoreData is returned in the the eState field of the AkAudioBuffer structure.
+		virtual void Execute( 
+				AkAudioBuffer *							io_pBuffer		///< In/Out audio buffer data structure (in-place processing)
+#ifdef AK_PS3
+				, AK::MultiCoreServices::DspProcess*&	out_pDspProcess	///< Asynchronous DSP process utilities on PS3
+#endif
+				) = 0;
 	};
 
 #ifdef RVL_OS
@@ -464,7 +486,15 @@ namespace AK
 		volatile AkUInt32 uint = *puint;
 		return unionSys_cast<AkReal32>( uint );
 	}
-	
+
+#elif defined (AK_IPHONE)
+	/// Utility function to read 32-bit floating point data from memory unaligned to 64-bit boundaries. Required by some platforms.
+	/// \sa
+	/// - \ref iakeffectparam_setparamsblock
+	inline AkReal32 ReadBankReal32( const AkReal32* ptr )
+	{
+		return AKPLATFORM::ReadUnaligned<AkReal32>((AkUInt8*) ptr);
+	}
 #else
 	/// Utility function to read 32-bit floating point data from memory unaligned to 64-bit boundaries. Required by some platforms.
 	/// \sa
